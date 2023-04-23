@@ -8,7 +8,7 @@ void setup() {
 void loop() {
   // establish variables for duration of the ping, and the distance result
   // in inches and centimeters:
-  long duration, inch es, cm;
+  long duration, inches, cm;
 
   // The PING))) is triggered by a HIGH pulse of 2 or more microseconds.
   // Give a short LOW pulse beforehand to ensure a clean HIGH pulse:
