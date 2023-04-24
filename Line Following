@@ -1,0 +1,71 @@
+#include <xmotion.h>
+
+int QTI[] = {A2, A4, 0};
+int QTIvalue[] = {0, 0, 0};
+ 
+int lineThreshhold = 200;
+
+void setup() {
+   Serial.begin(9600);
+}
+
+
+
+void loop() {
+//  lineCheck();
+//  Serial.print(QTIvalue[0]);
+//  Serial.print(QTIvalue[1]);
+//  Serial.println(QTIvalue[2]);
+  //Serial.println(digitalRead(0));
+  LineCheck();
+  Movement(QTIvalue[0],QTIvalue[1],QTIvalue[2]);
+  Serial.print(QTIvalue[0]);
+  Serial.print(QTIvalue[1]);
+  Serial.println(QTIvalue[2]);
+
+}
+
+void LineCheck(){ // 0 = white    1 = black
+  for (int i = 0; i < 2; i++){
+    if ((analogRead(QTI[i])) <= lineThreshhold){
+      QTIvalue[i] = 0;
+      //Serial.print(analogRead(QTI[i]));
+    } else {
+      QTIvalue[i] = 1;
+    }
+    QTIvalue[2] = digitalRead(0);
+    //Serial.print(i);
+  }
+}
+
+
+void Movement(int ls, int ms, int rs){
+  if ((ls == 0) && (ms == 1) && (rs == 0)){
+    xmotion.Left0(20,50);
+    Serial.println("Middle Sensor");
+  }
+  else if ((ls == 0) && (ms == 0) && (rs == 0)){
+    xmotion.Right0(20,50);
+    xmotion.StopMotors(30);
+    Serial.println("entering BrokenLine()");
+    BrokenLine();
+    Serial.println("BrokenLine() finished");
+  }
+  else if ((ls == 1) && (ms == 0) && (rs == 0)){
+    xmotion.Left0(20,50);
+  }
+  else if ((ls == 0) && (ms == 0) && (rs == 1)){
+    xmotion.Right0(20,40);
+  }
+  else if ((ls == 1) && (ms == 1) && (rs == 0)){
+    xmotion.Left0(20,100);
+  }
+}
+
+void BrokenLine(){
+  LineCheck();
+  if ((QTIvalue[0] == 0) && (QTIvalue[1] == 0) && (QTIvalue[2] == 0)){
+    xmotion.Forward(20,20);
+    BrokenLine();
+  }
+}
