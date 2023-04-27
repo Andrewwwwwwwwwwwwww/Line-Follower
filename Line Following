@@ -2,8 +2,18 @@
 
 int QTI[] = {0, A2, A4};
 int QTIvalue[] = {0, 0, 0};
- 
+int spd = 30;
+
 int lineThreshhold = 200;
+
+int lastDirection = 0; // 0 = straight  1 = left   2 = right
+
+long timeSince010;
+long timeSince011;
+int flag = 0;
+
+String space = " ";
+
 
 void setup() {
    Serial.begin(9600);
@@ -12,13 +22,14 @@ void setup() {
 
 
 void loop() {
+  long timeElapsed = millis();
 //  lineCheck();
 //  Serial.print(QTIvalue[0]);
 //  Serial.print(QTIvalue[1]);
 //  Serial.println(QTIvalue[2]);
   //Serial.println(digitalRead(0));
   LineCheck();
-  //Movement(QTIvalue[0],QTIvalue[1],QTIvalue[2]);
+  Movement(QTIvalue[0],QTIvalue[1],QTIvalue[2]);
   Serial.print(QTIvalue[0]);
   Serial.print(QTIvalue[1]);
   Serial.println(QTIvalue[2]);
@@ -41,31 +52,66 @@ void LineCheck(){ // 0 = white    1 = black
 
 void Movement(int ls, int ms, int rs){
   if ((ls == 0) && (ms == 1) && (rs == 0)){
-    xmotion.Left0(20,50);
-    Serial.println("Middle Sensor");
+    xmotion.Left0(spd,50);
+    timeSince010 = millis();
+    if (timeSince010 - timeSince011 >= 100){
+      flag++;
+      lastDirection = 1;
+    }
+    if (flag >= 5){
+      //xmotion.Left0(spd,120);
+      xmotion.ArcTurn(0,spd,350);
+      flag = 0;
+    }
   }
   else if ((ls == 0) && (ms == 0) && (rs == 0)){
-    xmotion.Right0(20,50);
+    xmotion.Right0(spd,50);xmotion.Left0(100,10);
     xmotion.StopMotors(30);
-    Serial.println("entering BrokenLine()");
     BrokenLine();
-    Serial.println("BrokenLine() finished");
+    lastDirection = 0;
   }
   else if ((ls == 1) && (ms == 0) && (rs == 0)){
-    xmotion.Left0(20,50);
+    xmotion.Left0(spd,50);
   }
   else if ((ls == 0) && (ms == 0) && (rs == 1)){
-    xmotion.Right0(20,40);
+    xmotion.Right0(spd,50);
   }
   else if ((ls == 1) && (ms == 1) && (rs == 0)){
-    xmotion.Left0(20,100);
+    xmotion.Left0(spd,100);
+    xmotion.Forward(spd,10);
+    lastDirection = 1;
   }
+   if ((ls == 0) && (ms == 1) && (rs == 1)){
+    xmotion.Right0(spd,100);
+    xmotion.Forward(spd,10);
+    lastDirection = 2;
+    timeSince011 = millis();
+    if (timeSince011 - timeSince010 >= 100){
+      flag++;
+      lastDirection = 1;
+    }
+    if (flag >= 5){
+      //xmotion.Left0(spd,140);
+      xmotion.ArcTurn(0,spd,350);
+      flag = 0;
+    }
+  }
+  else if ((ls == 1) && (ms == 1) && (rs == 1)){
+    if (lastDirection == 1){
+      xmotion.Left0(spd,80);
+    }
+    else if (lastDirection == 2){
+      xmotion.Right0(spd,80);
+    }
+  }
+  //Serial.println(ls + space + ms + space + rs);
 }
 
 void BrokenLine(){
   LineCheck();
   if ((QTIvalue[0] == 0) && (QTIvalue[1] == 0) && (QTIvalue[2] == 0)){
-    xmotion.Forward(20,20);
+    xmotion.Forward(spd,20);
+    Serial.println("000");
     BrokenLine();
   }
 }
