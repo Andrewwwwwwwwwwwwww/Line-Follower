@@ -41,17 +41,32 @@ void setup() {
 }
 
 
+bool started = false;
 
 void loop() {
   //long timeElapsed = millis();
   
 //  LineCheck();
 //  Movement(QTIvalue[0],QTIvalue[1],QTIvalue[2]);
-  delay(5000);
-  ServoClose();
-  //SonarCheck();
-  Start1();
-  delay(10000);
+  if (started == false){
+    delay(3000);
+    ServoClose();
+    //SonarCheck(); `
+    Start1();
+    xmotion.StopMotors(300);
+//    for (int i = 0; i < 5; i++){
+//      xmotion.Left0(spd,30);xmotion.Right0(100,10);
+//      xmotion.ArcTurn(5,spd,30);
+//    }
+    forward(spd,700);
+    LeftTurn();
+    forward(spd,800);
+//    xmotion.Left0(spd,250);
+    started = true;
+    ServoOpen();
+  }
+  LineCheck();
+  Movement(QTIvalue[0],QTIvalue[1],QTIvalue[2]);
   Serial.print(sonarValue[0]);
   Serial.print("/");
   Serial.print(sonarValue[1]);
@@ -194,9 +209,13 @@ void Start(){
 }
 
 void Start1(){
-  xmotion.MotorControl(120,120);
-  delay(1000);
+  forward(spd,1050);
   xmotion.Backward(-100,10);
   LeftTurn();
 }
 
+void forward(int power, int Time){
+  xmotion.MotorControl(power*2.5-(power*2.5/5), power*2.5);
+  delay(Time);
+  xmotion.StopMotors(100);
+}
