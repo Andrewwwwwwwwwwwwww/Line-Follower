@@ -2,8 +2,6 @@
 #include <NewPing.h>
 #include <Servo.h>
 
-#define SONAR_NUM 3      // Number of sensors. 
-#define MAX_DISTANCE 200 // Maximum distance (in cm) to ping.
 
 int pos = 0;
 
@@ -15,20 +13,23 @@ int lineThreshhold = 200;
 
 int lastDirection = 0; // 0 = straight  1 = left   2 = right
 
-
-//this is to deal with getting stuck on a left turn occasionaly
-long timeSince010;
+//this is to deal with getting stuck on a left turn occasionaly // not currently being used
+long timeSince010; 
 long timeSince011;
 int flag = 0;
 
 //debug
 String space = " ";
 
+
+#define SONAR_NUM 3      // Number of sensors. 
+#define MAX_DISTANCE 200 // Maximum distance (in cm) to ping.
 NewPing sonar[SONAR_NUM] = {   // Sensor object array.
   NewPing(4, 4, MAX_DISTANCE), // Each sensor's trigger pin, echo pin, and max distance to ping. 
   NewPing(2, 2, MAX_DISTANCE), 
   NewPing(1, 1, MAX_DISTANCE)
 };
+int sonarValue[] = {0,0,0};
 
 Servo servo;
 
@@ -36,18 +37,26 @@ Servo servo;
 void setup() {
    Serial.begin(9600);
    servo.attach(A1);
+   ServoClose();
 }
 
 
 
 void loop() {
   //long timeElapsed = millis();
-//  Serial.print(QTIvalue[0]);
-//  Serial.print(QTIvalue[1]);
-//  Serial.println(QTIvalue[2]);
-  //Serial.println(digitalRead(0));
-  LineCheck();
-  Movement(QTIvalue[0],QTIvalue[1],QTIvalue[2]);
+  
+//  LineCheck();
+//  Movement(QTIvalue[0],QTIvalue[1],QTIvalue[2]);
+  delay(5000);
+  ServoClose();
+  //SonarCheck();
+  Start1();
+  delay(10000);
+  Serial.print(sonarValue[0]);
+  Serial.print("/");
+  Serial.print(sonarValue[1]);
+  Serial.print("/");
+  Serial.println(sonarValue[2]);
 //    xmotion.ArcTurn(0,50,550);
 //    xmotion.ArcTurn(0,-100,10);
 //    xmotion.StopMotors(5000);
@@ -70,6 +79,12 @@ void LineCheck(){ // 0 = white    1 = black
   }
 }
 
+void SonarCheck(){
+  for (uint8_t i = 0; i < SONAR_NUM; i++){
+    delay(50);
+    sonarValue[i] = sonar[i].ping_cm();
+  }
+}
 
 void Movement(int ls, int ms, int rs){
   if ((ls == 0) && (ms == 1) && (rs == 0)){
@@ -133,6 +148,11 @@ void BrokenLine(){
   LineCheck();
   if ((QTIvalue[0] == 0) && (QTIvalue[1] == 0) && (QTIvalue[2] == 0)){
     xmotion.Forward(spd,20);
+//    xmotion.ArcTurn(50,0,100);xmotion.ArcTurn(0,100,10); // zig zag thing (start)
+//    LineCheck();
+//    if ((QTIvalue[0] == 0) && (QTIvalue[1] == 0) && (QTIvalue[2] == 0)){
+//    xmotion.ArcTurn(0,50,100);xmotion.ArcTurn(100,0,10);
+//  } //(end)
     Serial.println("000");
     BrokenLine();
   }
@@ -141,6 +161,7 @@ void BrokenLine(){
 void LeftTurn(){
   xmotion.StopMotors(200);
   xmotion.ArcTurn(0,50,450);xmotion.ArcTurn(0,-100,10);
+  Serial.println("LeftTurn()");
 }
 
 void RightTurn(){
@@ -148,14 +169,34 @@ void RightTurn(){
   xmotion.ArcTurn(50,0,450);xmotion.ArcTurn(0,-100,10);
 }
 
-void ServoMove(){
-    for (pos = 0; pos <= 70; pos++) { // goes from 0 degrees to 180 degrees
+void ServoOpen(){
+   for (pos = 0; pos <= 70; pos++) { // goes from 0 degrees to 180 degrees
     // in steps of 1 degree
      servo.write(pos);              // tell servo to go to position 'pos'
     delay(15);                       // waits 15ms for the servo to get there
   }
+}
+
+void ServoClose(){
   for (pos = 70; pos >= 0; pos--) { // goes from 180 degrees to 0 degrees
     servo.write(pos);
     delay(15);
   }
 }
+
+void Start(){
+  while ((sonarValue[0] < 20) || (sonarValue[0] = 0)){
+  xmotion.Forward(spd,2);
+  SonarCheck();
+  }
+  xmotion.Backward(100,10);
+  LeftTurn();
+}
+
+void Start1(){
+  xmotion.MotorControl(120,120);
+  delay(1000);
+  xmotion.Backward(-100,10);
+  LeftTurn();
+}
+
